@@ -3,7 +3,6 @@ import pandas as pd
 from datetime import datetime
 
 def days_until_month_end(date):
-    """Number of calendar days until the next month‑end."""
     year = date.year
     month = date.month
     if month == 12:
@@ -21,7 +20,6 @@ def compute_volatility_bridge_signal(current_vol, target_vol, days_to_target, vo
     return (target_vol - current_vol) / days_to_target
 
 def get_month_end_target(price_series, current_date, use_market_target=False, market_series=None):
-    """Get target price: last price at previous month‑end."""
     if use_market_target and market_series is not None:
         # Use market index level as target
         target = market_series.asof(current_date - pd.Timedelta(days=1))
@@ -43,10 +41,6 @@ def get_month_end_target(price_series, current_date, use_market_target=False, ma
 
 def compute_etf_signal(price_series, current_date, window=60, bridge_type="price",
                        use_market_target=False, market_series=None):
-    """
-    price_series: pandas Series with DatetimeIndex, values are prices.
-    market_series: optional Series for market index (if use_market_target=True).
-    """
     if len(price_series) < window:
         return None
     recent = price_series.iloc[-window:]
@@ -65,7 +59,6 @@ def compute_etf_signal(price_series, current_date, window=60, bridge_type="price
     else:  # volatility bridge
         vol_series = price_series.pct_change().rolling(window).std() * np.sqrt(252)
         current_vol = vol_series.iloc[-1]
-        # long-term mean volatility (over all available data)
         long_vol = price_series.pct_change().std() * np.sqrt(252)
         target_vol = long_vol
         signal = compute_volatility_bridge_signal(current_vol, target_vol, days_to_target)
