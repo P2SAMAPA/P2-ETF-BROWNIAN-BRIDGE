@@ -1,32 +1,19 @@
-# P2-ETF-BROWNIAN-BRIDGE
+# Geometric Brownian Bridge Engine
 
-Welcome to the P2-ETF-BROWNIAN-BRIDGE repository!
+Models ETF returns as Brownian bridges conditioned on end‑of‑month targets.  
+The required drift to hit the target (price or volatility) gives a directional signal.
 
-## Description
+- **Price bridge:** target = ETF's own price at last month‑end (or market index)
+- **Volatility bridge:** target = long‑term mean volatility
+- **Signal:** annualised drift (positive = bullish)
+- **Output:** top 3 ETFs per universe by signal strength, plus full ranking
 
-This project explores the application of Brownian Bridge models to ETF (Exchange-Traded Fund) analysis and prediction.
+Runs daily on GitHub Actions.
 
-## Getting Started
-
-To get started with this project, clone the repository and explore the files.
+## Local execution
 
 ```bash
-git clone https://github.com/P2SAMAPA/P2-ETF-BROWNIAN-BRIDGE.git
-cd P2-ETF-BROWNIAN-BRIDGE
-```
-
-## Project Structure
-
-Add your project files and folders here.
-
-## Contributing
-
-Contributions are welcome! Please feel free to submit pull requests or open issues for any suggestions or improvements.
-
-## License
-
-This project is open source and available under the MIT License.
-
-## Contact
-
-For more information, visit the [repository](https://github.com/P2SAMAPA/P2-ETF-BROWNIAN-BRIDGE).
+pip install -r requirements.txt
+export HF_TOKEN=<your_token>
+python trainer.py
+streamlit run streamlit_app.py
