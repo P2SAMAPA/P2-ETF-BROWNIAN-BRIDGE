@@ -24,8 +24,12 @@ def main():
             all_results[universe_name] = {"top_etfs": []}
             continue
 
-        # Use the last available date as current date
         current_date = prices.index[-1]
+        # Prepare market series if needed
+        market_series = None
+        if config.USE_MARKET_TARGET and config.TARGET_INDEX in prices.columns:
+            market_series = prices[config.TARGET_INDEX].dropna()
+
         signals = {}
         full_details = {}
 
@@ -36,10 +40,11 @@ def main():
             if len(price_series) < config.ESTIMATION_WINDOW:
                 continue
             result = compute_etf_signal(
-                price_series, current_date, window=config.ESTIMATION_WINDOW,
+                price_series, current_date,
+                window=config.ESTIMATION_WINDOW,
                 bridge_type=config.BRIDGE_TYPE,
                 use_market_target=config.USE_MARKET_TARGET,
-                market_ticker=config.TARGET_INDEX
+                market_series=market_series
             )
             if result is None:
                 continue
@@ -51,7 +56,6 @@ def main():
             all_results[universe_name] = {"top_etfs": []}
             continue
 
-        # Sort by signal descending (positive = bullish)
         sorted_etfs = sorted(signals.items(), key=lambda x: x[1], reverse=True)
         top_etfs = []
         full_scores = {}
