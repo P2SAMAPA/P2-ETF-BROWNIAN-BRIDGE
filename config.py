@@ -17,17 +17,13 @@ UNIVERSES = {
     ]
 }
 
-# Bridge type: "price" or "volatility"
-BRIDGE_TYPE = "price"          # price target = month-end level, volatility = mean-reverting vol
+# Rolling windows for evaluation (days) – always these six
+WINDOWS = [63, 252, 504, 1008, 2016]
 
-# For price bridge: target is the ETF's own price at the last month-end (or can be a market index like SPY)
-USE_MARKET_TARGET = False       # if True, target is SPY level (requires SPY in universe)
-TARGET_INDEX = "SPY"
-
-# For volatility bridge: target volatility (annualised) – compute historical mean
-VOL_TARGET_WINDOW = 252         # days to compute mean volatility
-
-# Rolling window for estimating drift (days)
-ESTIMATION_WINDOW = 60          # use last 60 days to estimate volatility and drift
+# Bridge parameters
+ESTIMATION_WINDOW = 60       # window for volatility estimation (days)
+BRIDGE_TYPE = "price"        # "price" or "volatility"
+USE_MARKET_TARGET = False    # if True, target = market index (e.g., SPY); else target = own price
+TARGET_INDEX = "SPY"         # used only if USE_MARKET_TARGET = True
 
 TOP_N = 3
