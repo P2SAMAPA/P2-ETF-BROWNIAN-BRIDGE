@@ -18,13 +18,14 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 st.markdown('<div class="main-header">🌉 Geometric Brownian Bridge Engine</div>', unsafe_allow_html=True)
-st.markdown('<div class="sub-header">Conditional drift to month‑end targets | Price bridge or volatility bridge</div>', unsafe_allow_html=True)
+st.markdown('<div class="sub-header">Conditional drift to month‑end targets | Price bridge or volatility bridge | Best window per ETF</div>', unsafe_allow_html=True)
 
 st.sidebar.markdown("## 🌉 Brownian Bridge")
 st.sidebar.markdown(f"**Run Date:** `{st.session_state.get('run_date', 'Not loaded')}`")
 st.sidebar.markdown(f"**Next Trading Day:** `{next_trading_day()}`")
 st.sidebar.markdown(f"**Bridge type:** {config.BRIDGE_TYPE}")
 st.sidebar.markdown(f"**Estimation window:** {config.ESTIMATION_WINDOW} days")
+st.sidebar.markdown("**Windows evaluated:** 63, 252, 504, 1008, 2016 days (best per ETF)")
 
 OUTPUT_REPO = config.OUTPUT_REPO
 HF_TOKEN = config.HF_TOKEN
@@ -68,7 +69,7 @@ if "error" in data:
 st.session_state['run_date'] = data['run_date']
 universes = data["universes"]
 
-st.header("🏆 Top ETFs by Bridge Signal (Positive = Bullish)")
+st.header("🏆 Top ETFs by Bridge Signal (Higher = Bullish)")
 
 for universe_name, uni_data in universes.items():
     top_etfs = uni_data.get("top_etfs", [])
@@ -81,34 +82,27 @@ for universe_name, uni_data in universes.items():
             st.markdown(f"""
             <div class="etf-card">
                 <div class="etf-ticker">{etf['ticker']}</div>
-                <div class="etf-score">signal = {etf['signal']:.4f}</div>
+                <div class="etf-score">signal = {etf['signal']:.6f}</div>
+                <div class="etf-score">best window = {etf.get('best_window', 'N/A')}d</div>
             </div>
             """, unsafe_allow_html=True)
-    # Full table with all ETFs and signals
-    with st.expander("📋 Full ranking (all ETFs)"):
+    with st.expander("📋 Full ranking (all ETFs, best window per ETF)"):
         full = uni_data.get("full_scores", {})
         if full:
-            df = pd.DataFrame(list(full.items()), columns=["ETF", "Bridge Signal"])
-            df = df.sort_values("Bridge Signal", ascending=False)
-            st.dataframe(df, use_container_width=True, hide_index=True)
-    # Optionally show detailed bridge parameters for top ETFs
-    with st.expander("📊 Bridge details (top ETFs)"):
-        details = uni_data.get("details", {})
-        for etf in top_etfs[:3]:
-            ticker = etf['ticker']
-            if ticker in details:
-                d = details[ticker]
-                st.write(f"**{ticker}**")
-                if config.BRIDGE_TYPE == "price":
-                    st.write(f"  Drift (μ): {d.get('drift',0):.4f}")
-                    st.write(f"  Target price: {d.get('target',0):.2f}")
-                    st.write(f"  Current price: {d.get('current',0):.2f}")
-                    st.write(f"  Days to month‑end: {d.get('days_to_target',0)}")
-                    st.write(f"  Volatility (σ): {d.get('volatility',0):.4f}")
+            rows = []
+            for ticker, info in full.items():
+                if isinstance(info, dict):
+                    score = info.get("score", 0.0)
+                    win = info.get("best_window", "N/A")
                 else:
-                    st.write(f"  Signal: {d.get('signal',0):.4f}")
-                    st.write(f"  Target vol: {d.get('target',0):.4f}")
-                    st.write(f"  Current vol: {d.get('current',0):.4f}")
+                    score = info
+                    win = "N/A"
+                rows.append({"ETF": ticker, "Bridge Signal": score, "Best Window": win})
+            df = pd.DataFrame(rows)
+            # Convert Bridge Signal to numeric and drop NaNs
+            df["Bridge Signal"] = pd.to_numeric(df["Bridge Signal"], errors='coerce')
+            df = df.dropna(subset=["Bridge Signal"]).sort_values("Bridge Signal", ascending=False)
+            st.dataframe(df, use_container_width=True, hide_index=True)
     st.divider()
 
-st.caption("For price bridge: positive drift = expected upward pull to month‑end level. For volatility bridge: positive signal = expected volatility increase.")
+st.caption("For price bridge: positive drift = expected upward pull to month‑end level. For volatility bridge: positive signal = expected volatility increase. For each ETF, the window that gives the highest signal is selected.")
